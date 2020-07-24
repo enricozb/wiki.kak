@@ -1,4 +1,4 @@
-# kak-wiki
+# wiki.kak
 
 Organize your life and find things quickly.
 
