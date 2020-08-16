@@ -11,7 +11,7 @@ hook global WinSetOption filetype=markdown %{
   require-module markdown-wiki
 }
 
-hook global BufCreate .*[.](markdown|md|mkd) %{
+hook global BufCreate .*[.](markdown|md|mkd|yuml) %{
   map buffer normal <tab> ': markdown-navigate-links n<ret>'
   map buffer normal <s-tab> ': markdown-navigate-links <lt>a-n<gt><ret>'
   map buffer normal <ret> ': markdown-follow-link<ret>'
@@ -54,9 +54,9 @@ provide-module markdown-wiki %{ evaluate-commands -no-hooks %{
   add-highlighter shared/markdown/inline/text/ regex \s(?<!_)(__([^\s_]|([^\s_](\n?[^\n_])*[^\s_]))__)(?!_)\s 1:bold
 
   # header style variations
-  add-highlighter shared/markdown/inline/text/ regex ^#\h*([^#\n]*) 1:rgb:d33682+bu
-  add-highlighter shared/markdown/inline/text/ regex ^##\h*([^#\n]*) 1:rgb:d33682+b
-  add-highlighter shared/markdown/inline/text/ regex ^###[#]*\h*([^#\n]*) 1:rgb:d33682
+  add-highlighter shared/markdown/inline/text/ regex ^(#)\h*([^#\n]*) 1:comment 2:rgb:d33682+bu
+  add-highlighter shared/markdown/inline/text/ regex ^(##)\h*([^#\n]*) 1:comment 2:rgb:d33682+b
+  add-highlighter shared/markdown/inline/text/ regex ^(###[#]*)\h*([^#\n]*) 1:comment 2:rgb:d33682
 
   # block quotes
   add-highlighter shared/markdown/inline/text/ regex ^\h*(>[^\n]*)+ 0:comment
@@ -104,7 +104,7 @@ provide-module markdown-wiki %{ evaluate-commands -no-hooks %{
   define-command -hidden markdown-grab-link %{ evaluate-commands %{
     evaluate-commands -draft %{
       execute-keys 'x'
-      set-option buffer markdown_link_line %val{selection}
+      set-option buffer markdown_link_line "%val{selection}"
     }
 
     # TODO: don't rely on perl...
@@ -124,6 +124,7 @@ provide-module markdown-wiki %{ evaluate-commands -no-hooks %{
             }
           }
         }'
+
     }
 
     evaluate-commands %sh{
@@ -131,10 +132,10 @@ provide-module markdown-wiki %{ evaluate-commands -no-hooks %{
         echo "fail not a valid link"
       elif [[ "$kak_opt_markdown_link_to_follow" =~ ^reference:(.+)$ ]]; then
         echo "set-option buffer markdown_reference_link true"
-        echo "set-option buffer markdown_link_to_follow ${BASH_REMATCH[1]}"
+        echo "set-option buffer markdown_link_to_follow '${BASH_REMATCH[1]}'"
       elif [[ "$kak_opt_markdown_link_to_follow" =~ ^absolute:(.+)$ ]]; then
         echo "set-option buffer markdown_reference_link false"
-        echo "set-option buffer markdown_link_to_follow ${BASH_REMATCH[1]}"
+        echo "set-option buffer markdown_link_to_follow '${BASH_REMATCH[1]}'"
       else
         echo "fail 'got bad ref/abs link: $kak_opt_markdown_link_to_follow'"
       fi
@@ -166,7 +167,7 @@ provide-module markdown-wiki %{ evaluate-commands -no-hooks %{
       if [[ "$kak_opt_markdown_link_to_follow" =~ ^http* ]]; then
         nohup brave "$kak_opt_markdown_link_to_follow" >/dev/null 2>&1 & disown
         echo "echo -markup {green}[opened link in browser]"
-      elif [[ "$kak_opt_markdown_link_to_follow" =~ .*\.md ]]; then
+      elif [[ "$kak_opt_markdown_link_to_follow" =~ .*\.(md|yml) ]]; then
         case "$kak_opt_markdown_link_to_follow" in
           /*) newfile="$kak_opt_markdown_link_to_follow" ;;
           *) newfile="${kak_buffile%/*.md}/$kak_opt_markdown_link_to_follow" ;;
