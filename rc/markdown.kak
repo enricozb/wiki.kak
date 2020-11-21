@@ -62,8 +62,8 @@ provide-module markdown-wiki %{ evaluate-commands -no-hooks %{
   add-highlighter shared/markdown/inline/text/ regex ^\h*(>[^\n]*)+ 0:comment
 
   # listblock marker fix for links immediately following a list bullet
-  remove-highlighter shared/markdown/listblock/marker
-  add-highlighter shared/markdown/listblock/marker region \A [-*] fill bullet
+  # remove-highlighter shared/markdown/listblock/marker
+  # add-highlighter shared/markdown/listblock/marker region \A [-*] fill bullet
 
   # matches [hello](link) and [hello][ref] links
   add-highlighter shared/markdown/inline/text/link regex \
