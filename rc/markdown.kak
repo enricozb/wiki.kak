@@ -19,7 +19,7 @@ hook global BufCreate .*[.](markdown|md|mkd|yuml) %{
 
   map buffer user T -docstring "insert today's iso date" 'i## <esc>! date -I<ret>'
   map buffer user d -docstring "wiki diary index" ': markdown-diary<ret>'
-  map buffer user f -docstring "format selected text" '| fmt -w 90 -g 88<ret>'
+  map buffer user f -docstring "format selected text" '| fmt -w 88 -g 86<ret>'
 
   map buffer normal + ': markdown-show-link<ret>' -docstring 'display hovered link'
   map buffer normal <c-k> ': markdown-make-link<ret>'
