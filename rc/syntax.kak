@@ -40,7 +40,7 @@ define-command markdown-syntax %{
   # emphasis
   ## this section is a bit messy because we support nesting _, *, __, and **
 
-  ## emphasis sections starting with one _ or *
+  ## emphasis section starting with one _ or *
   ## i'm so sorry
   evaluate-commands %sh{
     delims='*_'
@@ -52,7 +52,7 @@ define-command markdown-syntax %{
       printf "
         add-highlighter shared/markdown/inline/emphasis${delim}1 region \
             -recurse (^|(?<=\s))[${delim}][^${delim}\s] \
-          (^|(?<=\s))[${delim}][^${delim}\s] \
+          (^|(?<=\s))[${delim}](?=[^${delim}\s]) \
           [^${delim}\s][${delim}]((?=\s)|$) \
           regions
         add-highlighter shared/markdown/inline/emphasis${delim}1/inner default-region fill italic
@@ -66,7 +66,7 @@ define-command markdown-syntax %{
     done
   }
 
-  ## emphasis starting with two __ or **
+  ## emphasis section starting with two __ or **
   evaluate-commands %sh{
     delims='*_'
     while [ -n "$delims" ]; do
@@ -77,7 +77,7 @@ define-command markdown-syntax %{
       printf "
         add-highlighter shared/markdown/inline/emphasis${delim}2 region \
             -recurse (^|(?<=\s))[${delim}]{2}[^${delim}\s] \
-          (^|(?<=\s))[${delim}]{2}[^${delim}\s] \
+          (^|(?<=\s))[${delim}]{2}(?=[^${delim}\s]) \
           [^${delim}\s][${delim}]{2}((?=\s)|$) \
           regions
         add-highlighter shared/markdown/inline/emphasis${delim}2/inner default-region fill bold
