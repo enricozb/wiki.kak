@@ -30,16 +30,12 @@ define-command markdown-syntax %{
   add-highlighter shared/markdown/inline/text/ regex ^(##)\h*([^#\n]*) 1:comment 2:rgb:d33682+b
   add-highlighter shared/markdown/inline/text/ regex ^(###[#]*)\h*([^#\n]*) 1:comment 2:rgb:d33682
 
-  add-highlighter shared/markdown/listblock region ^\h*[-*]\s ^\h*((?=[-*])|$) group
-  add-highlighter shared/markdown/listblock/ ref markdown/inline
-  add-highlighter shared/markdown/listblock/marker regex ^\h*([-*])\s 1:bullet
-
   # lists
   add-highlighter shared/markdown/inline/text/unordered-list regex ^\h*([-+*])\s 1:bullet
   add-highlighter shared/markdown/inline/text/ordered-list   regex ^\h*(\d+[.)])\s 1:bullet
 
   # inline code
-  add-highlighter shared/markdown/inline/code region ` ` fill meta
+  add-highlighter shared/markdown/inline/code region ` ` fill string
 
   # emphasis
   ## this section is a bit messy because we support nesting _, *, __, and **
@@ -95,28 +91,17 @@ define-command markdown-syntax %{
     done
   }
 
-  # add-highlighter shared/markdown/inline/text/ regex \s(?<!\*)(\*([^\s*]|([^\s*](\n?[^\n*])*[^\s*]))\*)(?!\*)\s 1:italic
-  # add-highlighter shared/markdown/inline/text/ regex \s(?<!_)(_([^\s_]|([^\s_](\n?[^\n_])*[^\s_]))_)(?!_)\s 1:italic
-  # add-highlighter shared/markdown/inline/text/ regex \s(?<!\*)(\*\*([^\s*]|([^\s*](\n?[^\n*])*[^\s*]))\*\*)(?!\*)\s 1:bold
-  # add-highlighter shared/markdown/inline/text/ regex \s(?<!_)(__([^\s_]|([^\s_](\n?[^\n_])*[^\s_]))__)(?!_)\s 1:bold
+  # reference links
+  add-highlighter shared/markdown/inline/text/ regex %opt{markdown_reference_link_regex} 0:comment
 
-  # # block quotes
-  # add-highlighter shared/markdown/inline/text/ regex ^\h*(>[^\n]*)+ 0:comment
+  # block quotes
+  add-highlighter shared/markdown/inline/text/ regex ^\h*(>[^\n]*)+ 0:comment
 
-  # # listblock marker fix for links immediately following a list bullet
-  # # remove-highlighter shared/markdown/listblock/marker
-  # # add-highlighter shared/markdown/listblock/marker region \A [-*] fill bullet
+  # matches [hello](link) and [hello][ref] links
+  add-highlighter shared/markdown/inline/text/link regex %opt{markdown_link_regex} 1:comment 2:link 3:comment
 
-  # # matches [hello](link) and [hello][ref] links
-  # add-highlighter shared/markdown/inline/text/link regex \
-  #   %opt{markdown_link_regex} 1:comment 2:link 3:comment
+  # matches [hello] style anchors
+  add-highlighter shared/markdown/inline/text/anchor regex %opt{markdown_anchor_regex} 1:comment 2:value
 
-  # # matches [hello] style anchors
-  # add-highlighter shared/markdown/inline/text/anchor regex \
-  #   %opt{markdown_anchor_regex} 1:comment 2:value
-
-  # # matches reference links
-  # add-highlighter shared/markdown/inline/text/ regex \
-  #   %opt{markdown_reference_link_regex} 0:comment
 
 }
