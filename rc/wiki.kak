@@ -4,7 +4,7 @@
 #   copy reference link functionality
 
 declare-option -hidden str markdown_format_file %sh{
-  printf %s "python3 $(dirname $kak_source)/markdown_links.py --format"
+  printf %s "python3 $(dirname $kak_source)/format.py --format"
 }
 
 hook global WinSetOption filetype=markdown %{
@@ -27,55 +27,21 @@ hook global BufCreate .*[.](markdown|md|mkd|yuml) %{
   set-option buffer formatcmd %opt{markdown_format_file}
 }
 
-provide-module markdown-wiki %{ evaluate-commands -no-hooks %{
+provide-module markdown-wiki %{
+  declare-option -hidden str markdown_link_regex \
+    '[^\]](\[([^\[\n]+)\])(\[[^\]\n]+\]|\([^\)\n]+\))'
+  declare-option -hidden str markdown_anchor_regex \
+    '[^\]](\[([^\[\n]+)\])[^\[\(:]'
+  declare-option -hidden str markdown_reference_link_regex \
+    '\[[^\n]+\]: [^\n]*\n'
+
+  markdown-syntax
+
   declare-option -hidden str markdown_diary_dir "logs/diary"
   declare-option -hidden str markdown_link_to_follow ""
   declare-option -hidden str markdown_link_line ""
   declare-option -hidden bool markdown_reference_link false
   declare-option -hidden bool markdown_at_root true
-
-  declare-option -hidden str markdown_reference_link_regex \
-    '\[[^\n]+\]: [^\n]*\n'
-  declare-option -hidden str markdown_link_regex \
-    '[^\]](\[([^\[\n]+)\])(\[[^\]\n]+\]|\([^\)\n]+\))'
-  declare-option -hidden str markdown_anchor_regex \
-    '[^\]](\[([^\[\n]+)\])[^\[\(:]'
-
-  # fix _ * highlighters
-  remove-highlighter shared/markdown/inline/text/regex_^\[[^\]\n]*\]:\h*([^\n]*)_1:link
-  remove-highlighter shared/markdown/inline/text/regex_(?<!\*)(\*([^\s*]|([^\s*](\n?[^\n*])*[^\s*]))\*)(?!\*)_1:italic
-  remove-highlighter shared/markdown/inline/text/regex_(?<!_)(_([^\s_]|([^\s_](\n?[^\n_])*[^\s_]))_)(?!_)_1:italic
-  remove-highlighter shared/markdown/inline/text/regex_(?<!\*)(\*\*([^\s*]|([^\s*](\n?[^\n*])*[^\s*]))\*\*)(?!\*)_1:bold
-  remove-highlighter shared/markdown/inline/text/regex_(?<!_)(__([^\s_]|([^\s_](\n?[^\n_])*[^\s_]))__)(?!_)_1:bold
-
-  add-highlighter shared/markdown/inline/text/ regex \s(?<!\*)(\*([^\s*]|([^\s*](\n?[^\n*])*[^\s*]))\*)(?!\*)\s 1:italic
-  add-highlighter shared/markdown/inline/text/ regex \s(?<!_)(_([^\s_]|([^\s_](\n?[^\n_])*[^\s_]))_)(?!_)\s 1:italic
-  add-highlighter shared/markdown/inline/text/ regex \s(?<!\*)(\*\*([^\s*]|([^\s*](\n?[^\n*])*[^\s*]))\*\*)(?!\*)\s 1:bold
-  add-highlighter shared/markdown/inline/text/ regex \s(?<!_)(__([^\s_]|([^\s_](\n?[^\n_])*[^\s_]))__)(?!_)\s 1:bold
-
-  # header style variations
-  add-highlighter shared/markdown/inline/text/ regex ^(#)\h*([^#\n]*) 1:comment 2:rgb:d33682+bu
-  add-highlighter shared/markdown/inline/text/ regex ^(##)\h*([^#\n]*) 1:comment 2:rgb:d33682+b
-  add-highlighter shared/markdown/inline/text/ regex ^(###[#]*)\h*([^#\n]*) 1:comment 2:rgb:d33682
-
-  # block quotes
-  add-highlighter shared/markdown/inline/text/ regex ^\h*(>[^\n]*)+ 0:comment
-
-  # listblock marker fix for links immediately following a list bullet
-  # remove-highlighter shared/markdown/listblock/marker
-  # add-highlighter shared/markdown/listblock/marker region \A [-*] fill bullet
-
-  # matches [hello](link) and [hello][ref] links
-  add-highlighter shared/markdown/inline/text/link regex \
-    %opt{markdown_link_regex} 1:comment 2:link 3:comment
-
-  # matches [hello] style anchors
-  add-highlighter shared/markdown/inline/text/anchor regex \
-    %opt{markdown_anchor_regex} 1:comment 2:value
-
-  # matches reference links
-  add-highlighter shared/markdown/inline/text/ regex \
-    %opt{markdown_reference_link_regex} 0:comment
 
   # navigate links
   define-command -hidden -params 1 markdown-navigate-links %{
@@ -209,14 +175,10 @@ provide-module markdown-wiki %{ evaluate-commands -no-hooks %{
     set-option buffer markdown_at_root false
   }}
 
-  define-command markdown-format %{ evaluate-commands -draft %{
-    execute-keys '%|python3 ~/.config/kak/markdown_links.py --format<ret>'
-  }}
-
   define-command markdown-make-link %{ evaluate-commands %{
     execute-keys <a-i><a-w><esc>
     prompt "url: " %{
       execute-keys "i[<esc>a](%val{text})<esc>"
     }
   }}
-}}
+}
