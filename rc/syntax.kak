@@ -38,58 +38,10 @@ define-command markdown-syntax %{
   add-highlighter shared/markdown/inline/code region ` ` fill string
 
   # emphasis
-  ## this section is a bit messy because we support nesting _, *, __, and **
-
-  ## emphasis section starting with one _ or *
-  ## i'm so sorry
-  evaluate-commands %sh{
-    delims='*_'
-    while [ -n "$delims" ]; do
-      rest="${delims#?}"
-      delim="${delims%"$rest"}"
-      delims="$rest"
-      echo "${delims}: ${#delims}" >> /home/enricozb/fuck.txt
-      printf "
-        add-highlighter shared/markdown/inline/emphasis${delim}1 region \
-            -recurse (^|(?<=\s))[${delim}][^${delim}\s] \
-          (^|(?<=\s))[${delim}](?=[^${delim}\s]) \
-          [^${delim}\s][${delim}]((?=\s)|$) \
-          regions
-        add-highlighter shared/markdown/inline/emphasis${delim}1/inner default-region fill italic
-        add-highlighter shared/markdown/inline/emphasis${delim}1/emphasis2 region \
-          -match-capture \
-          -recurse (?:^|(?<=\s))(\*\*|__)[^_*\s] \
-          (?:^|(?<=\s))(\*\*|__)[^_*\s] \
-          [^_*\s](\*\*|__)(?:(?=\s)|$) \
-          fill bold
-      "
-    done
-  }
-
-  ## emphasis section starting with two __ or **
-  evaluate-commands %sh{
-    delims='*_'
-    while [ -n "$delims" ]; do
-      rest="${delims#?}"
-      delim="${delims%"$rest"}"
-      delims="$rest"
-      echo "${delims}: ${#delims}" >> /home/enricozb/fuck.txt
-      printf "
-        add-highlighter shared/markdown/inline/emphasis${delim}2 region \
-            -recurse (^|(?<=\s))[${delim}]{2}[^${delim}\s] \
-          (^|(?<=\s))[${delim}]{2}(?=[^${delim}\s]) \
-          [^${delim}\s][${delim}]{2}((?=\s)|$) \
-          regions
-        add-highlighter shared/markdown/inline/emphasis${delim}2/inner default-region fill bold
-        add-highlighter shared/markdown/inline/emphasis${delim}2/emphasis1 region \
-          -match-capture \
-          -recurse (?:^|(?<=\s))(\*|_)[^_*\s] \
-          (?:^|(?<=\s))(\*|_)[^_*\s] \
-          [^_*\s](\*|_)(?:(?=\s)|$) \
-          fill italic
-      "
-    done
-  }
+  add-markdown-light-emphasis-highlighters *
+  add-markdown-light-emphasis-highlighters _
+  add-markdown-strong-emphasis-highlighters *
+  add-markdown-strong-emphasis-highlighters _
 
   # reference links
   add-highlighter shared/markdown/inline/text/ regex %opt{markdown_reference_link_regex} 0:comment
@@ -102,6 +54,40 @@ define-command markdown-syntax %{
 
   # matches [hello] style anchors
   add-highlighter shared/markdown/inline/text/anchor regex %opt{markdown_anchor_regex} 1:comment 2:value
+}
 
+define-command -hidden add-markdown-light-emphasis-highlighters -params 1 %{
+  add-highlighter "shared/markdown/inline/light-emphasis%arg{1}" region \
+    -recurse "(^|(?<=\s))[%arg{1}][^%arg{1}\s]" \
+             "(^|(?<=\s))[%arg{1}](?=[^%arg{1}\s])" \
+             "[^%arg{1}\s][%arg{1}]((?=\s)|$)" \
+    regions
 
+  add-highlighter "shared/markdown/inline/light-emphasis%arg{1}/inner" default-region fill italic
+
+  # nesting strong emphasis inside of light emphasis
+  add-highlighter "shared/markdown/inline/light-emphasis%arg{1}/strong-emphasis" region \
+    -match-capture \
+    -recurse (?:^|(?<=\s))(\*\*|__)[^_*\s] \
+             (?:^|(?<=\s))(\*\*|__)[^_*\s] \
+             [^_*\s](\*\*|__)(?:(?=\s)|$) \
+    fill bold
+}
+
+define-command -hidden add-markdown-strong-emphasis-highlighters -params 1 %{
+  add-highlighter "shared/markdown/inline/strong-emphasis%arg{1}" region \
+      -recurse "(^|(?<=\s))[%arg{1}]{2}[^%arg{1}\s]" \
+               "(^|(?<=\s))[%arg{1}]{2}(?=[^%arg{1}\s])" \
+               "[^%arg{1}\s][%arg{1}]{2}((?=\s)|$)" \
+    regions
+
+  add-highlighter "shared/markdown/inline/strong-emphasis%arg{1}/inner" default-region fill bold
+
+  # nesting light emphasis inside of strong emphasis
+  add-highlighter "shared/markdown/inline/strong-emphasis%arg{1}/light-emphasis" region \
+    -match-capture \
+    -recurse (?:^|(?<=\s))(\*|_)[^_*\s] \
+             (?:^|(?<=\s))(\*|_)[^_*\s] \
+             [^_*\s](\*|_)(?:(?=\s)|$) \
+    fill italic
 }
