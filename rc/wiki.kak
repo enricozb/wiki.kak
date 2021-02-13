@@ -15,7 +15,6 @@ hook global BufCreate .*[.](markdown|md|mkd|yuml) %{
   map buffer normal <tab> ': markdown-navigate-links n<ret>'
   map buffer normal <s-tab> ': markdown-navigate-links <lt>a-n<gt><ret>'
   map buffer normal <ret> ': markdown-follow-link<ret>'
-  map buffer normal <backspace> ': markdown-unfollow-link<ret>'
 
   map buffer user T -docstring "insert today's iso date" 'i## <esc>! date -I<ret>'
   map buffer user d -docstring "wiki diary index" ': markdown-diary<ret>'
@@ -159,15 +158,6 @@ provide-module markdown-wiki %{
         echo "echo -markup {green}[opened file in default program]"
       fi
     }
-  }}
-
-  define-command -hidden markdown-unfollow-link %{ evaluate-commands %sh{
-    echo "write -sync"
-    if [ "$kak_opt_markdown_at_root" == "true" ]; then
-      echo "quit"
-    else
-      echo "delete-buffer"
-    fi
   }}
 
   define-command -hidden markdown-diary %{ evaluate-commands %{
