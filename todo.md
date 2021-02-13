@@ -1,6 +1,7 @@
 # kak-wiki todo
 
 ## Bugs
+- use only POSIX features
 - formatting with an invalid relative link crashes the formatter
 - show whether a link is broken, using a highlighter
 - any reference to a link regex should be in a kakoune option

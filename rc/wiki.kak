@@ -176,7 +176,12 @@ provide-module markdown-wiki %{
   }}
 
   define-command markdown-make-link %{ evaluate-commands %{
-    execute-keys <a-i><a-w><esc>
+    execute-keys %sh{
+      if [ ${#kak_selection} = 1 ]; then
+        printf "%s" "<a-i><a-w><esc>"
+      fi
+    }
+
     prompt "url: " %{
       execute-keys "i[<esc>a](%val{text})<esc>"
     }
