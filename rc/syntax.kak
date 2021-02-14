@@ -1,4 +1,9 @@
-define-command markdown-syntax %{
+provide-module markdown-syntax %{
+  declare-option -hidden str wiki_link_regex '[^\]](\[([^\[\n]+)\])(\[[^\]\n]+\]|\([^\)\n]+\))'
+  declare-option -hidden str wiki_anchor_regex '[^\]](\[([^\[\n]+)\])[^\[\(:]'
+  declare-option -hidden str wiki_reflink_regex '\[[^\n]+\]: [^\n]*\n'
+
+
   add-highlighter -override shared/markdown regions
 
   add-highlighter shared/markdown/inline default-region regions
@@ -44,16 +49,16 @@ define-command markdown-syntax %{
   add-markdown-strong-emphasis-highlighters _
 
   # reference links
-  add-highlighter shared/markdown/inline/text/ regex %opt{markdown_reference_link_regex} 0:comment
+  add-highlighter shared/markdown/inline/text/ regex %opt{wiki_reflink_regex} 0:comment
 
   # block quotes
   add-highlighter shared/markdown/inline/text/ regex ^\h*(>[^\n]*)+ 0:comment
 
   # matches [hello](link) and [hello][ref] links
-  add-highlighter shared/markdown/inline/text/link regex %opt{markdown_link_regex} 1:comment 2:link 3:comment
+  add-highlighter shared/markdown/inline/text/link regex %opt{wiki_link_regex} 1:comment 2:link 3:comment
 
   # matches [hello] style anchors
-  add-highlighter shared/markdown/inline/text/anchor regex %opt{markdown_anchor_regex} 1:comment 2:value
+  add-highlighter shared/markdown/inline/text/anchor regex %opt{wiki_anchor_regex} 1:comment 2:value
 }
 
 define-command -hidden add-markdown-light-emphasis-highlighters -params 1 %{

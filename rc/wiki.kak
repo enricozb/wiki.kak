@@ -6,30 +6,23 @@ hook global WinSetOption filetype=markdown %{
   require-module markdown-wiki
 }
 
-hook global BufCreate .*[.](markdown|md|mkd|yuml) %{
-  map buffer normal <tab> ': markdown-navigate-links n<ret>'
-  map buffer normal <s-tab> ': markdown-navigate-links <lt>a-n<gt><ret>'
-  map buffer normal <ret> ': markdown-follow-link<ret>'
+# hook global BufCreate .*[.](markdown|md|mkd|yuml) %{
+#   map buffer normal <tab> ': markdown-navigate-links n<ret>'
+#   map buffer normal <s-tab> ': markdown-navigate-links <lt>a-n<gt><ret>'
+#   map buffer normal <ret> ': markdown-follow-link<ret>'
 
-  map buffer user T -docstring "insert today's iso date" 'i## <esc>! date -I<ret>'
-  map buffer user d -docstring "wiki diary index" ': markdown-diary<ret>'
-  map buffer user f -docstring "format selected text" '| fmt -w 88 -g 86<ret>'
+#   map buffer user T -docstring "insert today's iso date" 'i## <esc>! date -I<ret>'
+#   map buffer user d -docstring "wiki diary index" ': markdown-diary<ret>'
+#   map buffer user f -docstring "format selected text" '| fmt -w 88 -g 86<ret>'
 
-  map buffer normal + ': markdown-show-link<ret>' -docstring 'display hovered link'
-  map buffer normal <c-k> ': markdown-make-link<ret>'
+#   map buffer normal + ': markdown-show-link<ret>' -docstring 'display hovered link'
+#   map buffer normal <c-k> ': markdown-make-link<ret>'
 
-  set-option buffer formatcmd %opt{markdown_format_file}
-}
+#   set-option buffer formatcmd %opt{markdown_format_file}
+# }
 
 provide-module markdown-wiki %{
-  declare-option -hidden str markdown_link_regex \
-    '[^\]](\[([^\[\n]+)\])(\[[^\]\n]+\]|\([^\)\n]+\))'
-  declare-option -hidden str markdown_anchor_regex \
-    '[^\]](\[([^\[\n]+)\])[^\[\(:]'
-  declare-option -hidden str markdown_reference_link_regex \
-    '\[[^\n]+\]: [^\n]*\n'
-
-  markdown-syntax
+  # require-module markdown-syntax
 
   declare-option -hidden str markdown_diary_dir "logs/diary"
   declare-option -hidden str markdown_link_to_follow ""
@@ -40,7 +33,7 @@ provide-module markdown-wiki %{
   # navigate links
   define-command -hidden -params 1 markdown-navigate-links %{
     evaluate-commands -no-hooks -save-regs / %{
-      set-register / "(%opt{markdown_anchor_regex}|%opt{markdown_link_regex})"
+      set-register / "(%opt{wiki_anchor_regex}|%opt{wiki_link_regex})"
       execute-keys "%arg{1}<a-;>ll"
   }}
 
