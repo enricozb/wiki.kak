@@ -24,3 +24,5 @@
 - Have a good way to copy a link
 - make a `w` alias to fzf into a wiki page. It would be nice to have a flag
   that also opens the intermediate pages
+- format and un-format reference links
+- add per-link functionality, to swap it's reference and absolute form

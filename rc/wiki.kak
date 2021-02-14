@@ -1,8 +1,3 @@
-# TODO:
-#   add functions that format and unformat reference links
-#   add per-link functionality, to swap it's reference and absolute form
-#   copy reference link functionality
-
 declare-option -hidden str markdown_format_file %sh{
   printf %s "python3 $(dirname $kak_source)/format.py --format"
 }
