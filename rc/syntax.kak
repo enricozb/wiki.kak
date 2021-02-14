@@ -1,4 +1,4 @@
-provide-module markdown-syntax %{
+provide-module wiki-syntax %{
   declare-option -hidden str wiki_link_regex '[^\]](\[([^\[\n]+)\])(\[[^\]\n]+\]|\([^\)\n]+\))'
   declare-option -hidden str wiki_anchor_regex '[^\]](\[([^\[\n]+)\])[^\[\(:]'
   declare-option -hidden str wiki_reflink_regex '\[[^\n]+\]: [^\n]*\n'

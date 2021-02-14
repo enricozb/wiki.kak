@@ -1,167 +1,132 @@
-declare-option -hidden str markdown_format_file %sh{
-  printf %s "python3 $(dirname $kak_source)/format.py --format"
-}
+declare-option -hidden str wiki_plugin_path %sh{ dirname "$kak_source" }
 
-hook global WinSetOption filetype=markdown %{
-  require-module markdown-wiki
-}
 
-# hook global BufCreate .*[.](markdown|md|mkd|yuml) %{
-#   map buffer normal <tab> ': markdown-navigate-links n<ret>'
-#   map buffer normal <s-tab> ': markdown-navigate-links <lt>a-n<gt><ret>'
-#   map buffer normal <ret> ': markdown-follow-link<ret>'
+provide-module wiki %{
+  require-module wiki-syntax
 
-#   map buffer user T -docstring "insert today's iso date" 'i## <esc>! date -I<ret>'
-#   map buffer user d -docstring "wiki diary index" ': markdown-diary<ret>'
-#   map buffer user f -docstring "format selected text" '| fmt -w 88 -g 86<ret>'
+  declare-option -hidden str wiki_link_kind
+  declare-option -hidden str wiki_link_path
 
-#   map buffer normal + ': markdown-show-link<ret>' -docstring 'display hovered link'
-#   map buffer normal <c-k> ': markdown-make-link<ret>'
-
-#   set-option buffer formatcmd %opt{markdown_format_file}
-# }
-
-provide-module markdown-wiki %{
-  # require-module markdown-syntax
-
-  declare-option -hidden str markdown_diary_dir "logs/diary"
-  declare-option -hidden str markdown_link_to_follow ""
-  declare-option -hidden str markdown_link_line ""
-  declare-option -hidden bool markdown_reference_link false
-  declare-option -hidden bool markdown_at_root true
-
-  # navigate links
-  define-command -hidden -params 1 markdown-navigate-links %{
+  define-command wiki-next-link -docstring "navigate to the next wiki link" %{
     evaluate-commands -no-hooks -save-regs / %{
       set-register / "(%opt{wiki_anchor_regex}|%opt{wiki_link_regex})"
-      execute-keys "%arg{1}<a-;>ll"
-  }}
+      execute-keys "n<a-;>ll"
+    }
+  }
 
-  # if `markdown_link_to_follow` refers to a reference link id, then set
-  # `markdown_link_to_follow to the link that it refers to
-  define-command -hidden markdown-grab-reference-link %{
-    evaluate-commands -draft -no-hooks -save-regs / %{
+  define-command wiki-prev-link -docstring "navigate to the previous wiki link" %{
+    evaluate-commands -no-hooks -save-regs / %{
+      set-register / "(%opt{wiki_anchor_regex}|%opt{wiki_link_regex})"
+      execute-keys "<a-n><a-;>ll"
+    }
+  }
 
-      set-register / "^\[%opt{markdown_link_to_follow}\]: ([^\n]*)"
-      try %{
-        execute-keys 'n'
-      } catch %{
-        fail "the link id '%opt{markdown_link_to_follow}' does not exist"
+  define-command -hidden wiki-grab-link -docstring "set wiki_link_path to the value of this link, dereferencing if necessary" %{
+    # detect whether the link is inline or reference, and get its path
+    try %{
+      evaluate-commands -draft %{
+        # select the character immediately after the first ']' in a link: '(' or '['
+        execute-keys <a-i>[ll
+        execute-keys %sh{
+          if [ "$kak_selection" = "(" ]; then
+            printf "%s" "<a-i>("
+            printf "%s" ": set-option buffer wiki_link_kind inline<ret>"
+            printf "%s" ": set-option buffer wiki_link_path %val{selection}<ret>"
+          elif [ "$kak_selection" = "[" ]; then
+            printf "%s" "<a-i>["
+            printf "%s" ": set-option buffer wiki_link_kind reference<ret>"
+            printf "%s" ": set-option buffer wiki_link_path %val{selection}<ret>"
+          else
+            printf "%s" ": fail<ret>"
+          fi
+        }
       }
-
-      # select the link, save it
-      execute-keys 'ghf:wwGl'
-      set-option buffer markdown_link_to_follow "%reg{.}"
-  }}
-
-  define-command -hidden markdown-grab-link %{ evaluate-commands %{
-    evaluate-commands -draft %{
-      execute-keys 'x'
-      set-option buffer markdown_link_line "%val{selection}"
+    } catch %{
+      fail "invalid link"
     }
 
-    # TODO: don't rely on perl...
-    # this sets `markdown_link_to_follow` to the id of a link [test][1] -> 1
-    # otherwise it sets it to an empty string
-    set-option buffer markdown_link_to_follow %sh{
-      echo -e "$kak_cursor_column\n$kak_opt_markdown_link_line" | \
-      perl -e '
-        my $cursor = <STDIN>;
-        my $line = <STDIN>;
-        while ( $line =~ /(\[[^\[]+\])(\[([^\]]+)\]|\(([^\)]+)\))/g ) {
-          if (($-[1] <= $cursor - 1) && ($cursor - 1 < $+[1])) {
-            if ($3 ne "") {
-              print "reference:$3";
-            } else {
-              print "absolute:$4";
-            }
-          }
-        }'
-
-    }
-
-    evaluate-commands %sh{
-      if [ -z "$kak_opt_markdown_link_to_follow" ]; then
-        echo "fail not a valid link"
-      elif [[ "$kak_opt_markdown_link_to_follow" =~ ^reference:(.+)$ ]]; then
-        echo "set-option buffer markdown_reference_link true"
-        echo "set-option buffer markdown_link_to_follow '${BASH_REMATCH[1]}'"
-      elif [[ "$kak_opt_markdown_link_to_follow" =~ ^absolute:(.+)$ ]]; then
-        echo "set-option buffer markdown_reference_link false"
-        echo "set-option buffer markdown_link_to_follow '${BASH_REMATCH[1]}'"
-      else
-        echo "fail 'got bad ref/abs link: $kak_opt_markdown_link_to_follow'"
-      fi
-    }
-
-    # if the link is reference, replace `markdown_link_to_follow` with the
-    # correct destination
-    evaluate-commands %sh{
-      if "$kak_opt_markdown_reference_link"; then
-        echo "markdown-grab-reference-link"
-      fi
-    }
-  }}
-
-  define-command -hidden markdown-show-link %{ evaluate-commands %{
-    markdown-grab-link
-    # copy the link that's being shown
-    execute-keys -with-hooks ":edit -scratch<ret>i%opt{markdown_link_to_follow}<esc>xHy:db<ret>"
-    echo -markup "{green}%opt{markdown_link_to_follow}"
-  }}
-
-  define-command -hidden markdown-follow-link %{ evaluate-commands %{
-    write
-
-    markdown-grab-link
-
-    # follow the link, which is either a website or a file
-    evaluate-commands %sh{
-      if [[ "$kak_opt_markdown_link_to_follow" =~ ^http* ]]; then
-        nohup brave "$kak_opt_markdown_link_to_follow" >/dev/null 2>&1 & disown
-        echo "echo -markup {green}[opened link in browser]"
-      elif [[ "$kak_opt_markdown_link_to_follow" =~ .*\.(md|yml) ]]; then
-        case "$kak_opt_markdown_link_to_follow" in
-          /*) newfile="$kak_opt_markdown_link_to_follow" ;;
-          *) newfile="${kak_buffile%/*.md}/$kak_opt_markdown_link_to_follow" ;;
-        esac
-        if [[ ! -f "$newfile" ]]; then
-          mkdir -p "${newfile%/*.md}"
-          made_new_dir=true
+    # if the link is a reference, grab the link from the first line with [<id>]: <link>
+    try %{
+      execute-keys -draft %sh{
+        if [ "$kak_opt_wiki_link_kind" = reference ]; then
+          printf "%s" "/\Q[$kak_opt_wiki_link_path]: <ret>lGl"
+          printf "%s" ": set-option buffer wiki_link_path %val{selection}<ret>"
         fi
-        echo "edit '$newfile'"
-        if [ "$made_new_dir" = true ]; then
-          echo "echo -markup {green}[made new file]"
+      }
+    }
+  }
+
+  define-command wiki-open-link -docstring "open the link in the default program" %{
+    wiki-grab-link
+
+    evaluate-commands %sh{
+      # if link is likely a url, open it with xdg, and print any output in lower case
+      case "$kak_opt_wiki_link_path" in
+        http:* | https:*)
+          printf "echo -markup {green}%s\n" "$(xdg-open "$kak_opt_wiki_link_path" | tr [:upper:] [:lower:])"
+          exit 0
+        ;;
+
+        # if the path is absolute, do nothing. If it is relative, make it relative to the parent directory of buffile
+        /*) true ;;
+        *) kak_opt_wiki_link_path="$(dirname "$kak_buffile")/$kak_opt_wiki_link_path" ;;
+      esac
+
+      # if the file exists, open it with the default program. If that program is kakoune, edit it in a new buffer.
+      if [ -f "$kak_opt_wiki_link_path" ]; then
+        default_program=$(xdg-mime query default $(xdg-mime query filetype "$kak_opt_wiki_link_path"))
+
+        if [ "$default_program" = kak.desktop ]; then
+          printf "%s\n" "edit '$kak_opt_wiki_link_path'"
+        else
+          nohup xdg-open "$kak_opt_wiki_link_path" >/dev/null 2>&1 & disown
         fi
-        echo "set-option buffer markdown_at_root false"
-      elif [[ "$kak_opt_markdown_link_to_follow" =~ \.html$ ]]; then
-        case "$kak_opt_markdown_link_to_follow" in
-          /*) newfile="$kak_opt_markdown_link_to_follow" ;;
-          *) newfile="${kak_buffile%/*.md}/$kak_opt_markdown_link_to_follow" ;;
-        esac
-        nohup brave "$newfile" >/dev/null 2>&1 & disown
-        echo "echo -markup {green}[opened html file in browser]"
+
+      # if the file does not exist, open it in kakoune only if it ends with *.md
       else
-        nohup xdg-open "${kak_buffile%/*.md}/$kak_opt_markdown_link_to_follow" >/dev/null 2>&1 & disown
-        echo "echo -markup {green}[opened file in default program]"
+        case "$kak_opt_wiki_link_path" in
+          *.md)
+            mkdir -p "$(dirname "$kak_opt_wiki_link_path")"
+            printf "%s\n" "edit '$kak_opt_wiki_link_path'"
+            printf "%s\n" "echo -markup {green}created new file"
+          ;;
+
+          *) printf "%s\n" "fail 'link does not exist and doesn''t match *.md'" ;;
+        esac
       fi
     }
-  }}
+  }
 
-  define-command -hidden markdown-diary %{ evaluate-commands %{
-    edit "~/wiki/%opt{markdown_diary_dir}/diary.md"
-    set-option buffer markdown_at_root false
-  }}
+  define-command wiki-yank-link -docstring "yank and display the link's value" %{
+    wiki-grab-link
+    execute-keys -with-hooks ": edit -scratch<ret>i%opt{wiki_link_path}<esc>xHy:db<ret>"
+    echo -markup "{green}%opt{wiki_link_path}"
+  }
 
-  define-command markdown-make-link %{ evaluate-commands %{
+  define-command wiki-make-link -docstring "prompt for a url and create a link with the current selection" %{
     execute-keys %sh{
-      if [ ${#kak_selection} = 1 ]; then
+      if [ "${#kak_selection}" = 1 ]; then
         printf "%s" "<a-i><a-w><esc>"
       fi
     }
 
-    prompt "url: " %{
-      execute-keys "i[<esc>a](%val{text})<esc>"
-    }
-  }}
+    prompt "url: " %{ execute-keys "i[<esc>a](%val{text})<esc>" }
+  }
+}
+
+
+hook global WinSetOption filetype=markdown %{
+  require-module wiki
+}
+
+
+# ────────────── buffer settings ──────────────
+hook global BufSetOption filetype=markdown %{
+  map buffer normal <tab>   ': wiki-next-link<ret>'
+  map buffer normal <s-tab> ': wiki-prev-link<ret>'
+  map buffer normal <ret>   ': wiki-open-link<ret>'
+  map buffer normal +       ': wiki-yank-link<ret>'
+  map buffer normal <c-k>   ': wiki-make-link<ret>'
+
+  set-option buffer formatcmd "python3 %opt{wiki_plugin_path}/format.py --format"
 }
