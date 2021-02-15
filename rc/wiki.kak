@@ -1,11 +1,33 @@
+# ────────────── configuration options ──────────────
+# whether or not to use the custom 
+declare-option bool wiki_use_custom_syntax true
+
+# whether or not to use the recommended keymap
+declare-option bool wiki_use_custom_keymap true
+
+
+# ────────────── internal options ──────────────
+# used to access `format.py`
 declare-option -hidden str wiki_plugin_path %sh{ dirname "$kak_source" }
 
+# shared between syntax.kak and wiki.kak
+declare-option -hidden str wiki_link_regex '[^\]](\[([^\[\n]+)\])(\[[^\]\n]+\]|\([^\)\n]+\))'
+declare-option -hidden str wiki_anchor_regex '[^\]](\[([^\[\n]+)\])[^\[\(:]'
+declare-option -hidden str wiki_reflink_regex '\[[^\n]+\]: [^\n]*\n'
 
+# used when visiting links
+declare-option -hidden str wiki_link_kind
+declare-option -hidden str wiki_link_path
+declare-option -hidden str wiki_link_refid
+
+
+# ────────────── commands ──────────────
 provide-module wiki %{
-  require-module wiki-syntax
-
-  declare-option -hidden str wiki_link_kind
-  declare-option -hidden str wiki_link_path
+  evaluate-commands %sh{
+    if [ "$kak_opt_wiki_use_custom_syntax" = true ]; then
+      printf "%s" "require-module wiki-syntax"
+    fi
+  }
 
   define-command wiki-next-link -docstring "navigate to the next wiki link" %{
     evaluate-commands -no-hooks -save-regs / %{
@@ -26,7 +48,7 @@ provide-module wiki %{
     try %{
       evaluate-commands -draft %{
         # select the character immediately after the first ']' in a link: '(' or '['
-        execute-keys <a-i>[ll
+        execute-keys "<a-i>[ll"
         execute-keys %sh{
           if [ "$kak_selection" = "(" ]; then
             printf "%s" "<a-i>("
@@ -49,8 +71,9 @@ provide-module wiki %{
     try %{
       execute-keys -draft %sh{
         if [ "$kak_opt_wiki_link_kind" = reference ]; then
+          printf "%s" ": set-option buffer wiki_link_refid '$kak_opt_wiki_link_path'<ret>"
           printf "%s" "/\Q[$kak_opt_wiki_link_path]: <ret>lGl"
-          printf "%s" ": set-option buffer wiki_link_path %val{selection}<ret>"
+          printf "%s" ': set-option buffer wiki_link_path "%val{selection}"<ret>'
         fi
       }
     }
@@ -112,6 +135,26 @@ provide-module wiki %{
 
     prompt "url: " %{ execute-keys "i[<esc>a](%val{text})<esc>" }
   }
+
+  define-command wiki-inline-link -docstring "turn a reference link to an inline one" %{
+    wiki-grab-link
+    evaluate-commands %sh{
+      if [ "$kak_opt_wiki_link_kind" != reference ]; then
+        printf "%s" "fail 'link must be reference'"
+      fi
+    }
+
+    # delete the reference link
+    execute-keys -draft "/\Q[%opt{wiki_link_refid}]: <ret>xd"
+
+    # replace the reference id with the link path
+    evaluate-commands -draft %{
+      execute-keys "t]ll<a-i>["
+      execute-keys -draft "lr)"
+      execute-keys -draft "<a-;>hr("
+      execute-keys -draft "c%opt{wiki_link_path}<esc>"
+    }
+  }
 }
 
 
@@ -120,13 +163,16 @@ hook global WinSetOption filetype=markdown %{
 }
 
 
-# ────────────── buffer settings ──────────────
+# ────────────── keys  ──────────────
 hook global BufSetOption filetype=markdown %{
-  map buffer normal <tab>   ': wiki-next-link<ret>'
-  map buffer normal <s-tab> ': wiki-prev-link<ret>'
-  map buffer normal <ret>   ': wiki-open-link<ret>'
-  map buffer normal +       ': wiki-yank-link<ret>'
-  map buffer normal <c-k>   ': wiki-make-link<ret>'
+  evaluate-commands %sh{
+    printf "%s\n" "map buffer normal <tab>   ': wiki-next-link<ret>'"
+    printf "%s\n" "map buffer normal <s-tab> ': wiki-prev-link<ret>'"
+    printf "%s\n" "map buffer normal <ret>   ': wiki-open-link<ret>'"
+    printf "%s\n" "map buffer normal +       ': wiki-yank-link<ret>'"
+    printf "%s\n" "map buffer normal <minus> ': wiki-inline-link<ret>'"
+    printf "%s\n" "map buffer normal <c-k>   ': wiki-make-link<ret>'"
+  }
 
   set-option buffer formatcmd "python3 %opt{wiki_plugin_path}/format.py --format"
 }
