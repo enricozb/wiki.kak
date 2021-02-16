@@ -21,7 +21,10 @@ Using [plug.kak][2], add the following to your `kakrc`:
 ```
 plug "enricozb/wiki.kak"
 ```
-See the [configuration][3] section for customization.
+Then, follow the [default programs][3] section to set up `xdg` to open text
+files in kakoune.
+
+See the [configuration][4] section for any customization options.
 
 ### Dependencies
 The following must be installed to have all of the features of wiki.kak:
@@ -40,13 +43,13 @@ map buffer normal <c-k>   ': wiki-make-link<ret>'
 map buffer normal <space> ': wiki-toggle-checkbox<ret>'
 ```
 These can be customized with the `wiki_use_custom_keymap` option, see 
-[keys and syntax highlighting][4].
+[keys and syntax highlighting][5].
 
 ## Commands
 - **wiki-next-link** goes to the next link
 - **wiki-prev-link** goes to the previous link
 - **wiki-open-link** opens the link in the default program, see
-  [default program][5] for setting this up
+  [default program][6] for setting this up
 - **wiki-yank-link** yanks the link to the clipboard, and also displays the
   link in the status line
 - **wiki-inline-link** converts the reference link the cursor is currently on
@@ -57,13 +60,26 @@ These can be customized with the `wiki_use_custom_keymap` option, see
 
 ## Configuration
 ### Default Programs
-wiki.kak uses [xdg-open][6] to open links that kakoune can't open. If you have
+wiki.kak uses [xdg-open][7] to open links that kakoune can't open. If you have
 a system without `xdg-open`, please raise an issue and I'll prioritize a
 `wiki_use_xdg_open` configuration option.
 
+The following lines are recommended in your `~/.local/share/applications/defaults.list`:
+```
+[Default Applications]
+text/plain=kak.desktop
+inode/empty=kak.desktop
+application/csv=kak.desktop
+application/json=kak.desktop
+application/octet-stream=kak.desktop
+```
+These tell `xdg-open` to use `kak` when opening _text-like_ files.
+Only the first one is strictly required, but the `application/octet-stream` is
+strongly recommended, as some non-ascii text files are seen as an octet stream.
+
 ### Keys and Syntax Highlighting
 The recommended configuration is the default configuration. It sets up the
-keys specified in [keys][7], and also uses the custom markdown syntax
+keys specified in [keys][8], and also uses the custom markdown syntax
 highlighter. To turn each of these off, the following options can be set:
 ```
 plug "enricozb/wiki.kak" %{
@@ -76,14 +92,15 @@ plug "enricozb/wiki.kak" %{
 Please raise an issue for any missing features or bugs you encounter.
 
 ## To Do
-See [todo][8].
+See [todo][9].
 
 
 [1]: https://asciinema.org/a/391505
 [2]: https://github.com/robertmeta/plug.kak
-[3]: #configuration
-[4]: #keys-and-syntax-highlighting
-[5]: #default-program
-[6]: https://linux.die.net/man/1/xdg-open
-[7]: #keys
-[8]: todo.md
+[3]: #default-programs
+[4]: #configuration
+[5]: #keys-and-syntax-highlighting
+[6]: #default-program
+[7]: https://linux.die.net/man/1/xdg-open
+[8]: #keys
+[9]: todo.md
