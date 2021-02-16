@@ -2,13 +2,13 @@
 
 
 ## Bugs
+- does not work on mac os due to lack of xdg
 - use only POSIX features
   - this might be done already
 - formatting with an invalid relative link crashes the formatter
 
 
 ## Features
-- checkboxes
 - following links to headings
 - `=` should auto-format everything. Line-width, links, etc.
   - there should be a way to revert to inline links.
@@ -20,7 +20,8 @@
   currently on
   - half of this is done with **wiki-inline-link**
 - deduplicate links when doing reference links
-- Have a good way to copy a link
+- Have a good way to copy a reference link
+  - possible with +, but broken when copying a line that has a reference link.
 - make a `w` alias to fzf into a wiki page. It would be nice to have a flag
   that also opens the intermediate pages
 - show whether a link is broken, using a highlighter

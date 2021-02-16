@@ -155,6 +155,23 @@ provide-module wiki %{
       execute-keys -draft "c%opt{wiki_link_path}<esc>"
     }
   }
+
+  define-command wiki-toggle-checkbox -docstring "toggle a checkbox on and off" %{
+    try %{
+      evaluate-commands -draft %{
+        execute-keys "xs^\h*- \[.\]<ret>h"
+        execute-keys %sh{
+          if [ "$kak_selection" = " " ]; then
+            printf "%s" "rx"
+          else
+            printf "%s" "r<space>"
+          fi
+        }
+      }
+    } catch %{
+      fail "no checkbox on this line"
+    }
+  }
 }
 
 
@@ -172,6 +189,7 @@ hook global BufSetOption filetype=markdown %{
     printf "%s\n" "map buffer normal +       ': wiki-yank-link<ret>'"
     printf "%s\n" "map buffer normal <minus> ': wiki-inline-link<ret>'"
     printf "%s\n" "map buffer normal <c-k>   ': wiki-make-link<ret>'"
+    printf "%s\n" "map buffer normal <space> ': wiki-toggle-checkbox<ret>'"
   }
 
   set-option buffer formatcmd "python3 %opt{wiki_plugin_path}/format.py --format"
