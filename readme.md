@@ -40,7 +40,7 @@ map buffer normal <ret>   ': wiki-open-link<ret>'
 map buffer normal +       ': wiki-yank-link<ret>'
 map buffer normal <minus> ': wiki-inline-link<ret>'
 map buffer normal <c-k>   ': wiki-make-link<ret>'
-map buffer normal <space> ': wiki-toggle-checkbox<ret>'
+map buffer normal ';'     ': wiki-toggle-checkbox<ret>'
 ```
 These can be customized with the `wiki_use_custom_keymap` option, see 
 [keys and syntax highlighting][5].

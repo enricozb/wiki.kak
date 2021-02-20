@@ -189,7 +189,7 @@ hook global BufSetOption filetype=markdown %{
     printf "%s\n" "map buffer normal +       ': wiki-yank-link<ret>'"
     printf "%s\n" "map buffer normal <minus> ': wiki-inline-link<ret>'"
     printf "%s\n" "map buffer normal <c-k>   ': wiki-make-link<ret>'"
-    printf "%s\n" "map buffer normal <space> ': wiki-toggle-checkbox<ret>'"
+    printf "%s\n" "map buffer normal ';'     ': wiki-toggle-checkbox<ret>'"
   }
 
   set-option buffer formatcmd "python3 %opt{wiki_plugin_path}/format.py --format"
