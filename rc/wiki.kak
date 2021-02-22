@@ -83,10 +83,11 @@ provide-module wiki %{
     wiki-grab-link
 
     evaluate-commands %sh{
-      # if link is likely a url, open it with xdg, and print any output in lower case
+      # if link is likely a url, open it with xdg
       case "$kak_opt_wiki_link_path" in
         http:* | https:*)
-          printf "echo -markup {green}%s\n" "$(xdg-open "$kak_opt_wiki_link_path" | tr [:upper:] [:lower:])"
+          nohup xdg-open "$kak_opt_wiki_link_path" >/dev/null 2>&1 & disown
+          printf "echo -markup {green}%s\n" "opened link in default browser"
           exit 0
         ;;
 
