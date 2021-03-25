@@ -72,7 +72,7 @@ provide-module wiki %{
       execute-keys -draft %sh{
         if [ "$kak_opt_wiki_link_kind" = reference ]; then
           printf "%s" ": set-option buffer wiki_link_refid '$kak_opt_wiki_link_path'<ret>"
-          printf "%s" "/\Q[$kak_opt_wiki_link_path]: <ret>lGl"
+          printf "%s" "/^\h*\Q[$kak_opt_wiki_link_path]: <ret>lGl"
           printf "%s" ': set-option buffer wiki_link_path "%val{selection}"<ret>'
         fi
       }
