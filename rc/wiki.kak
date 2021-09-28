@@ -96,11 +96,14 @@ provide-module wiki %{
         *) kak_opt_wiki_link_path="$(dirname "$kak_buffile")/$kak_opt_wiki_link_path" ;;
       esac
 
-      # if the file exists, open it with the default program. If that program is kakoune, edit it in a new buffer.
+      # if the file exists, open it with kakoune if it ends with .md, otherwise open it in the default program.
+      # if the default program is kakoune, edit it in a new buffer.
       if [ -f "$kak_opt_wiki_link_path" ]; then
-        default_program=$(xdg-mime query default $(xdg-mime query filetype "$kak_opt_wiki_link_path"))
+        printf "%s\n" "echo -debug 'opening $kak_opt_wiki_link_path'"
 
-        if [ "$default_program" = kak.desktop ]; then
+        if expr "$kak_opt_wiki_link_path" : '.*\.md' 1>/dev/null; then
+          printf "%s\n" "edit '$kak_opt_wiki_link_path'"
+        elif [ $(xdg-mime query default $(xdg-mime query filetype "$kak_opt_wiki_link_path")) = kak.desktop ]; then
           printf "%s\n" "edit '$kak_opt_wiki_link_path'"
         else
           nohup xdg-open "$kak_opt_wiki_link_path" >/dev/null 2>&1 & disown
