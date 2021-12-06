@@ -1,5 +1,5 @@
 # ────────────── configuration options ──────────────
-# whether or not to use the custom 
+# whether or not to use the custom
 declare-option bool wiki_use_custom_syntax true
 
 # whether or not to use the recommended keymap
@@ -180,12 +180,15 @@ provide-module wiki %{
 
 
 hook global WinSetOption filetype=markdown %{
-  require-module wiki
+  # override all markdown files to wiki
+  set-option buffer filetype wiki
 }
 
 
 # ────────────── keys  ──────────────
-hook global BufSetOption filetype=markdown %{
+hook global BufSetOption filetype=wiki %{
+  require-module wiki
+
   evaluate-commands %sh{
     printf "%s\n" "map buffer normal <tab>   ': wiki-next-link<ret>'"
     printf "%s\n" "map buffer normal <s-tab> ': wiki-prev-link<ret>'"
