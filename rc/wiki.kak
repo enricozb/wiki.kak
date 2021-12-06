@@ -1,11 +1,16 @@
-# ────────────── activate on md files ──────────────
+# ────────────── initialization ──────────────
 hook global BufCreate .*[.](md) %{
   set-option buffer filetype wiki
 }
 
+hook -group wiki-highlight global WinSetOption filetype=wiki %{
+  add-highlighter window/wiki ref wiki
+  hook -once -always window WinSetOption filetype=.* %{ remove-highlighter window/wiki }
+}
+
 
 # ────────────── configuration options ──────────────
-# whether or not to use the custom
+# whether or not to use the custom syntax
 declare-option bool wiki_use_custom_syntax true
 
 # whether or not to use the recommended keymap
@@ -31,7 +36,7 @@ declare-option -hidden str wiki_link_refid
 provide-module wiki %{
   evaluate-commands %sh{
     if [ "$kak_opt_wiki_use_custom_syntax" = true ]; then
-      printf "%s" "require-module wiki-syntax"
+      printf "%s\n" "require-module wiki-syntax"
     fi
   }
 

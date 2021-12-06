@@ -4,7 +4,7 @@ provide-module wiki-syntax %{
   declare-option -hidden str wiki_reflink_regex '\[[^\n]+\]: [^\n]*\n'
 
 
-  add-highlighter -override shared/wiki regions
+  add-highlighter shared/wiki regions
 
   add-highlighter shared/wiki/inline default-region regions
   add-highlighter shared/wiki/inline/text default-region group
