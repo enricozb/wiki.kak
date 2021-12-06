@@ -1,3 +1,9 @@
+# ────────────── activate on md files ──────────────
+hook global BufCreate .*[.](md) %{
+  set-option buffer filetype wiki
+}
+
+
 # ────────────── configuration options ──────────────
 # whether or not to use the custom
 declare-option bool wiki_use_custom_syntax true
@@ -176,12 +182,6 @@ provide-module wiki %{
       fail "no checkbox on this line"
     }
   }
-}
-
-
-hook global WinSetOption filetype=markdown %{
-  # override all markdown files to wiki
-  set-option buffer filetype wiki
 }
 
 
