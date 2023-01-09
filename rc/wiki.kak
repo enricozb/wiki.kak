@@ -194,15 +194,13 @@ provide-module wiki %{
 hook global BufSetOption filetype=wiki %{
   require-module wiki
 
-  evaluate-commands %sh{
-    printf "%s\n" "map buffer normal <tab>   ': wiki-next-link<ret>'"
-    printf "%s\n" "map buffer normal <s-tab> ': wiki-prev-link<ret>'"
-    printf "%s\n" "map buffer normal <ret>   ': wiki-open-link<ret>'"
-    printf "%s\n" "map buffer normal +       ': wiki-yank-link<ret>'"
-    printf "%s\n" "map buffer normal <minus> ': wiki-inline-link<ret>'"
-    printf "%s\n" "map buffer normal <c-k>   ': wiki-make-link<ret>'"
-    printf "%s\n" "map buffer normal ';'     ': wiki-toggle-checkbox<ret>'"
-  }
+  map buffer normal <tab>   ': wiki-next-link<ret>'
+  map buffer normal <s-tab> ': wiki-prev-link<ret>'
+  map buffer normal <ret>   ': wiki-open-link<ret>'
+  map buffer normal +       ': wiki-yank-link<ret>'
+  map buffer normal <minus> ': wiki-inline-link<ret>'
+  map buffer normal <c-k>   ': wiki-make-link<ret>'
+  map buffer normal ';'     ': wiki-toggle-checkbox<ret>'
 
   set-option buffer formatcmd "python3 %opt{wiki_plugin_path}/format.py --format"
 }
