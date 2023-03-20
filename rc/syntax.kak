@@ -9,26 +9,8 @@ provide-module wiki-syntax %{
   add-highlighter shared/wiki/inline default-region regions
   add-highlighter shared/wiki/inline/text default-region group
 
-  # code fences
-  evaluate-commands %sh{
-    languages="
-      awk c cabal clojure coffee cpp css cucumber d diff dockerfile fish
-      gas go haml haskell html ini java javascript json julia kak kickstart
-      latex lisp lua makefile wiki moon objc perl pug python ragel
-      ruby rust sass scala scss sh swift toml tupfile typescript yaml sql
-    "
-    for lang in ${languages}; do
-      printf 'add-highlighter shared/wiki/%s region -match-capture ^(\h*)```\h*(%s|\{=%s\}))\\b ^(\h*)``` regions\n' "${lang}" "${lang}" "${lang}"
-      printf 'add-highlighter shared/wiki/%s/ default-region fill meta\n' "${lang}"
-      [ "${lang}" = kak ] && ref=kakrc || ref="${lang}"
-      printf 'add-highlighter shared/wiki/%s/inner region ```\h*(%s|\{=%s\})\\b\K (?=```) ref %s\n' "${lang}" "${lang}" "${lang}" "${ref}"
-    done
-  }
-
-  add-highlighter shared/wiki/codeblock region -match-capture \
-      ^(\h*)```\h* \
-      ^(\h*)```\h*$ \
-      fill meta
+  # code blocks. see wiki.kak for implementation
+  add-highlighter shared/wiki/codeblock region -match-capture (```|~~~) (```|~~~) regions
 
   # header style variations
   add-highlighter shared/wiki/inline/text/ regex ^(#)\h*([^#\n]*) 1:comment 2:rgb:d33682+bu

@@ -5,7 +5,13 @@ hook global BufCreate .*[.](md) %{
 
 hook -group wiki-highlight global WinSetOption filetype=wiki %{
   add-highlighter window/wiki ref wiki
-  hook -once -always window WinSetOption filetype=.* %{ remove-highlighter window/wiki }
+  hook -once -always window WinSetOption filetype=.* %{
+    remove-hooks window wiki-load-languages
+    remove-highlighter window/wiki
+  }
+
+  hook -group wiki-load-languages window NormalIdle .* %{ wiki-load-languages }
+  hook -group wiki-load-languages window InsertIdle .* %{ wiki-load-languages }
 }
 
 
@@ -185,6 +191,27 @@ provide-module wiki %{
       }
     } catch %{
       fail "no checkbox on this line"
+    }
+  }
+
+  define-command -hidden wiki-load-languages -docstring "load language modules for code fences" %{
+    evaluate-commands -draft %{
+      try %{
+        execute-keys '%1s(?:```|~~~)([a-z]+)\s<ret>'
+        evaluate-commands -itersel %{
+          try %{
+            require-module %val{selection}
+
+            add-highlighter "shared/wiki/codeblock/%val{selection}-`" region "```%val{selection}" "```" regions
+            add-highlighter "shared/wiki/codeblock/%val{selection}-`/fences" default-region fill meta
+            add-highlighter "shared/wiki/codeblock/%val{selection}-`/inner" region "```%val{selection}\K" (?=```) ref %val{selection}
+
+            add-highlighter "shared/wiki/codeblock/%val{selection}-~" region "~~~%val{selection}" "~~~" regions
+            add-highlighter "shared/wiki/codeblock/%val{selection}-~/fences" default-region fill meta
+            add-highlighter "shared/wiki/codeblock/%val{selection}-~/inner" region "~~~%val{selection}\K" (?=~~~) ref %val{selection}
+          }
+        }
+      }
     }
   }
 }
