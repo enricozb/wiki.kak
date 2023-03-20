@@ -9,8 +9,9 @@ provide-module wiki-syntax %{
   add-highlighter shared/wiki/inline default-region regions
   add-highlighter shared/wiki/inline/text default-region group
 
-  # code blocks. see wiki.kak for implementation
+  # code blocks. see wiki.kak for langauge-specific blocks
   add-highlighter shared/wiki/codeblock region -match-capture (```|~~~) (```|~~~) regions
+  add-highlighter shared/wiki/codeblock/ default-region fill meta
 
   # header style variations
   add-highlighter shared/wiki/inline/text/ regex ^(#)\h*([^#\n]*) 1:comment 2:rgb:d33682+bu
