@@ -222,6 +222,8 @@ provide-module wiki %{
 
     wiki-next-link
     wiki-open-link
+
+    execute-keys "i# %arg{1}<ret><ret>"
   }
 
   define-command today %{
