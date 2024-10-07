@@ -214,6 +214,23 @@ provide-module wiki %{
       }
     }
   }
+
+  define-command -hidden wiki-create-and-follow-link -params 1 -docstring "creates a list entry with a link to a new markdown file" %{
+    execute-keys "i- [%arg{1}](%arg{1}.md)<esc>gh"
+
+    write
+
+    wiki-next-link
+    wiki-open-link
+  }
+
+  define-command today %{
+    wiki-create-and-follow-link %sh{date --iso}
+  }
+
+  define-command tomorrow %{
+    wiki-create-and-follow-link %sh{date --iso -d '+1 day'}
+  }
 }
 
 
